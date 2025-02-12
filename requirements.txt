@@ -6,3 +6,5 @@ fake_useragent
 requests
 loguru
 apscheduler
+jwt
+pandas
