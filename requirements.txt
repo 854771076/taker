@@ -1,0 +1,8 @@
+# 列出项目中的python依赖
+apscheduler
+pandas
+web3
+fake_useragent
+requests
+loguru
+apscheduler
