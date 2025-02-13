@@ -102,9 +102,11 @@ class TakerBot():
         if exp and exp < now:
             return False
         return True
-    def check_exp(self, login_time,expire_time=3600):
+    def check_exp(self, login_time,expire_time=60*60*5):
+        
         if not login_time:
             return False
+        login_time=float(login_time)
         now = int(time.time())
         # 检查过期时间
         if login_time and login_time + expire_time < now:
@@ -169,8 +171,11 @@ class TakerBot():
     def connect_x(self,url="https://twitter.com/i/oauth2/authorize?response_type=code&client_id=d1E1aFNaS0xVc2swaVhFaVltQlY6MTpjaQ&redirect_uri=https%3A%2F%2Fearn.taker.xyz%2Fbind%2Fx&scope=tweet.read+users.read+follows.read&state=state&code_challenge=challenge&code_challenge_method=plain"):
         assert self.account.get('registed'),"账户未注册"
         assert self.account.get('x_token'),"x_token为空"
-        if self.account.get('bind_x') or self.account.get('x_token_bad'):
+        if self.account.get('bind_x'):
             return
+        if self.account.get('x_token_bad'):
+            raise Exception(f"账户:{self.wallet.address},x_token失效")
+            
         def submit_connect_x(oauth_token):
             json_data = {
                 'code': oauth_token,
@@ -282,16 +287,16 @@ class TakerBot():
             response.raise_for_status()
             data=response.json()
             if data.get('code')!=200:
-                raise Exception(f"执行异常：{data.get('msg')}")
+                raise Exception(f"执行异常,{data.get('msg')}")
             return data
         # 抛出代理错误
         except requests.exceptions.ProxyError as e:
-            logger.warning(f"代理错误: {e},重试中...")
+            logger.warning(f"代理错误,{e},重试中...")
             time.sleep(self.config.RETRY_INTERVAL)
             if retry_func:
                 return retry_func()
         except Exception as e:
-            raise Exception(f"请求过程中发生错误: {e}")
+            raise Exception(f"请求过程中发生错误,{e}")
 
 class TakerBotManager():
     def __init__(self,config:Config):
