@@ -66,7 +66,6 @@ class TakerBot():
         self.ua=UserAgent()
         self.headers={
             'Accept': 'application/json, text/plain, */*',
-            # 'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJub25jZSI6ImJhYjVhNWE2LWUwOTgtNGNhYy04ZTc4LWNkYzFkMWZhM2NjYiIsImxvZ2luX3VzZXJfa2V5IjoxNTQ4MTQ3MTN9.PDOYpEP9bE_cjHlTRQSMEOZYjgWDoDd_ruz5gUGzinFStL0WtEjMC-tEwGIFDLGX7hbh8GkaYeqonjdlJ8rdrg',
             'Origin': 'https://earn.taker.xyz',
             'Pragma': 'no-cache',
             'Referer': 'https://earn.taker.xyz/',
