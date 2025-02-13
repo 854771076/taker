@@ -102,6 +102,21 @@ class TakerBot():
         if exp and exp < now:
             return False
         return True
+    def check_exp(self, login_time,expire_time=3600):
+        if not login_time:
+            return False
+        now = int(time.time())
+        # 检查过期时间
+        if login_time and login_time + expire_time < now:
+            return False
+        return True
+    def get_user_info(self):
+        response = self.session.get('https://lightmining-api.taker.xyz/user/getUserInfo')
+        data=self._handle_response(response)
+        userinfo=data.get('data',{})
+        self.account.update(userinfo)
+        self.config.save_accounts()
+        return userinfo
     def login(self):
         def get_nonce():
             json_data = {
@@ -111,12 +126,10 @@ class TakerBot():
             data=self._handle_response(response)
             nonce=data.get('data',{}).get('nonce')
             return nonce
-        def get_user_info():
-            response = self.session.get('https://lightmining-api.taker.xyz/user/getUserInfo')
-            data=self._handle_response(response)
-            return data.get('data',{})
+        
         token=self.account.get('token')
-        if token and self.check_jwt_exp(token):
+        login_time=self.account.get('login_time')
+        if token and self.check_exp(login_time):
             logger.info(f"账户:{self.wallet.address},token复用")
         else:
             if not self.account.get('registed'):
@@ -141,17 +154,17 @@ class TakerBot():
             response = self.session.post('https://lightmining-api.taker.xyz/wallet/login', json=json_data)
             data=self._handle_response(response)
             token=data.get('data',{}).get('token')
+            login_time=int(time.time())
             if not self.account.get('registed'):
                 self.account['registed']=True
                 self.config.save_accounts()
             self.account['token']=token
+            self.account['login_time']=login_time
             self.config.save_accounts()
         self.session.headers.update({
             'Authorization': 'Bearer '+token
         })
-        userinfo=get_user_info()
-        self.account.update(userinfo)
-        self.config.save_accounts()
+        self.get_user_info()
         logger.success(f"登录成功,账户:{self.wallet.address}")
     def connect_x(self,url="https://twitter.com/i/oauth2/authorize?response_type=code&client_id=d1E1aFNaS0xVc2swaVhFaVltQlY6MTpjaQ&redirect_uri=https%3A%2F%2Fearn.taker.xyz%2Fbind%2Fx&scope=tweet.read+users.read+follows.read&state=state&code_challenge=challenge&code_challenge_method=plain"):
         assert self.account.get('registed'),"账户未注册"
@@ -287,6 +300,10 @@ class TakerBotManager():
         except Exception as e:
             logger.error(f"账户:{bot.wallet.address},挖矿失败,{e}")
         bot.done_tasks()
+        try:
+            bot.get_user_info()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},获取用户信息失败,{e}")
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
             futures = [executor.submit(self.run_single, account) for account in self.accounts]
