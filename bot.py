@@ -169,7 +169,7 @@ class TakerBot():
     def connect_x(self,url="https://twitter.com/i/oauth2/authorize?response_type=code&client_id=d1E1aFNaS0xVc2swaVhFaVltQlY6MTpjaQ&redirect_uri=https%3A%2F%2Fearn.taker.xyz%2Fbind%2Fx&scope=tweet.read+users.read+follows.read&state=state&code_challenge=challenge&code_challenge_method=plain"):
         assert self.account.get('registed'),"账户未注册"
         assert self.account.get('x_token'),"x_token为空"
-        if self.account.get('bind_x'):
+        if self.account.get('bind_x') or self.account.get('x_token_bad'):
             return
         def submit_connect_x(oauth_token):
             json_data = {
@@ -183,8 +183,14 @@ class TakerBot():
             self.account['bind_x']=True
             self.config.save_accounts()
             logger.success(f"账户:{self.wallet.address},{msg},x绑定成功")
-        xauth=XAuth(self.account.get('x_token'))
-        oauth_token=xauth.oauth2(url)
+        xauth=XAuth(self.account.get('x_token'),proxies=self.proxies)
+        try:
+            oauth_token=xauth.oauth2(url)
+        except Exception as e:
+            if "Bad Token" in str(e):
+                self.account['x_token_bad']=True
+                self.config.save_accounts()
+            raise e
         submit_connect_x(oauth_token)
     def mining(self):
         assert self.account.get('registed'),"账户未注册"
